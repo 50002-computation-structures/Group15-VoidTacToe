@@ -1,0 +1,141 @@
+// Game FSM: state transitions only (dff-based for inter-module state bus)
+// Output: out_state[5] -> Control Unit
+
+module game_fsm (
+    input clk,
+    input rst,
+    input slowclk,
+    input rd2_zero,
+    input rd2_lsb,
+    input button_press,
+    input start_btn,
+    input button_index[4],
+    output out_state[5],
+    output cur_turn,
+    output win_rom_idx[3],
+    output saved_btn_out[4]
+) {
+
+    const IDLE             = 5d0
+    const STORE_P1_MASK    = 5d1
+    const STORE_P2_MASK    = 5d2
+    const COMBINE_OR       = 5d3
+    const VALIDATE_AND     = 5d4
+    const BRANCH_VALIDATE  = 5d5
+    const PLACE            = 5d6
+    const UPDATE_P1        = 5d7
+    const UPDATE_P2        = 5d8
+    const POPCOUNT_MASK    = 5d9
+    const CMPEQ_3          = 5d10
+    const BRANCH_POPCOUNT  = 5d11
+    const WIN_AND          = 5d12
+    const WIN_CMPEQ        = 5d13
+    const BRANCH_WIN       = 5d14
+    const WIN_NEXT         = 5d15
+    const SWITCH_TURN      = 5d16
+    const GAME_OVER        = 5d17
+
+    dff state[5](#INIT(0), .clk(clk), .rst(rst))
+    dff turn_dff(#INIT(0), .clk(clk), .rst(rst))
+    dff win_idx[3](#INIT(0), .clk(clk), .rst(rst))
+    dff saved_btn[4](#INIT(0), .clk(clk), .rst(rst))
+
+    always {
+        out_state = state.q
+        cur_turn = turn_dff.q
+        win_rom_idx = win_idx.q
+        saved_btn_out = saved_btn.q
+
+        state.d = state.q
+        turn_dff.d = turn_dff.q
+        win_idx.d = win_idx.q
+        saved_btn.d = saved_btn.q
+
+        if (slowclk) {
+            case (state.q) {
+                IDLE:
+                    if (start_btn) {
+                        turn_dff.d = 0
+                        win_idx.d = 0
+                    }
+                    if (button_press) {
+                        saved_btn.d = button_index
+                        state.d = STORE_P1_MASK
+                    }
+
+                STORE_P1_MASK:
+                    state.d = STORE_P2_MASK
+
+                STORE_P2_MASK:
+                    state.d = COMBINE_OR
+
+                COMBINE_OR:
+                    state.d = VALIDATE_AND
+
+                VALIDATE_AND:
+                    state.d = BRANCH_VALIDATE
+
+                BRANCH_VALIDATE:
+                    if (rd2_zero) {
+                        state.d = PLACE
+                    } else {
+                        state.d = IDLE
+                    }
+
+                PLACE:
+                    state.d = UPDATE_P1
+
+                UPDATE_P1:
+                    state.d = UPDATE_P2
+
+                UPDATE_P2:
+                    state.d = POPCOUNT_MASK
+
+                POPCOUNT_MASK:
+                    state.d = CMPEQ_3
+
+                CMPEQ_3:
+                    state.d = BRANCH_POPCOUNT
+
+                BRANCH_POPCOUNT:
+                    if (rd2_lsb) {
+                        win_idx.d = 0
+                        state.d = WIN_AND
+                    } else {
+                        state.d = SWITCH_TURN
+                    }
+
+                WIN_AND:
+                    state.d = WIN_CMPEQ
+
+                WIN_CMPEQ:
+                    state.d = BRANCH_WIN
+
+                BRANCH_WIN:
+                    if (rd2_lsb) {
+                        state.d = GAME_OVER
+                    } else {
+                        state.d = WIN_NEXT
+                    }
+
+                WIN_NEXT:
+                    if (win_idx.q == 3d7) { // Correct for 8 entries (0-7)
+                        state.d = SWITCH_TURN
+                    } else {
+                        win_idx.d = win_idx.q + 1
+                        state.d = WIN_AND
+                    }
+
+                SWITCH_TURN:
+                    turn_dff.d = ~turn_dff.q
+                    state.d = IDLE
+
+                GAME_OVER:
+                    if (start_btn) {
+                        turn_dff.d = 0
+                        state.d = IDLE
+                    }
+            }
+        }
+    }
+}
