@@ -1,0 +1,192 @@
+// Control Unit: combinational state -> control signals
+
+module game_control_unit (
+    input in_state[5],
+    input cur_turn,
+    input saved_btn[4],
+    output alufn[6],
+    output asel,
+    output bsel[2],
+    output we,
+    output ra1[3],
+    output ra2[3],
+    output wa[3],
+    output wdsel[2],
+    output constant[32],
+    output do_place,
+    output placed[2],
+    output game_over
+) {
+
+    const OP_ADD    = 6b000000
+    const OP_POPCNT = 6b000100
+    const OP_AND    = 6b011000
+    const OP_OR     = 6b011110
+    const OP_XOR    = 6b010110
+    const OP_CMPEQ  = 6b110011
+
+    const S_IDLE             = 5d0
+    const S_STORE_P1_MASK    = 5d1
+    const S_STORE_P2_MASK    = 5d2
+    const S_COMBINE_OR       = 5d3
+    const S_VALIDATE_AND     = 5d4
+    const S_BRANCH_VALIDATE  = 5d5
+    const S_PLACE            = 5d6
+    const S_UPDATE_P1        = 5d7
+    const S_UPDATE_P2        = 5d8
+    const S_POPCOUNT_MASK    = 5d9
+    const S_CMPEQ_3          = 5d10
+    const S_BRANCH_POPCOUNT  = 5d11
+    const S_WIN_AND          = 5d12
+    const S_WIN_CMPEQ        = 5d13
+    const S_BRANCH_WIN       = 5d14
+    const S_WIN_NEXT         = 5d15
+    const S_SWITCH_TURN      = 5d16
+    const S_GAME_OVER        = 5d17
+
+    // Look for this logic (usually at the top of the always block)
+    sig cur_mask_addr[3]
+    
+    always {
+        cur_mask_addr = cur_turn ? 3d1 : 3d0
+        alufn = OP_ADD
+        asel = 0
+        bsel = 0
+        we = 0
+        ra1 = 0
+        ra2 = 0
+        wa = 0
+        wdsel = 0
+        constant = 0
+        do_place = 0
+        placed = 2b00
+        game_over = 0
+
+        if (~cur_turn) {
+            cur_mask_addr = 3d0
+            placed = 2b01
+        } else {
+            cur_mask_addr = 3d1
+            placed = 2b11
+        }
+
+        case (in_state) {
+            S_IDLE:
+                placed = 2b00
+
+            S_STORE_P1_MASK:
+                we = 1
+                wa = 3d0
+                wdsel = 2b01
+
+            S_STORE_P2_MASK:
+                we = 1
+                wa = 3d1
+                wdsel = 2b10
+
+            S_COMBINE_OR:
+                alufn = OP_OR
+                asel = 0
+                bsel = 2b00
+                ra1 = 3d0
+                ra2 = 3d1
+                wa = 3d5
+                we = 1
+                wdsel = 2b00
+
+            S_VALIDATE_AND:
+                alufn = OP_AND
+                asel = 0
+                bsel = 2b01
+                ra1 = 3d5
+                wa = 3d5
+                we = 1
+                wdsel = 2b00
+                constant = 32b0
+                case (saved_btn) {
+                    4d0: constant = 32h001
+                    4d1: constant = 32h002
+                    4d2: constant = 32h004
+                    4d3: constant = 32h008
+                    4d4: constant = 32h010
+                    4d5: constant = 32h020
+                    4d6: constant = 32h040
+                    4d7: constant = 32h080
+                    4d8: constant = 32h100
+                }
+
+            S_BRANCH_VALIDATE:
+                ra2 = 3d5
+
+            S_PLACE:
+                do_place = 1
+
+            S_UPDATE_P1:
+                we = 1
+                wa = 3d0       // Address for P1_MASK
+                wdsel = 2b01   // MUST route the mask from the datapath to WD
+
+            S_UPDATE_P2:
+                we = 1
+                wa = 3d1
+                wdsel = 2b10
+
+            S_POPCOUNT_MASK:
+                alufn = OP_POPCNT
+                asel = 0           // Routes RA1's data to ALU 'a'
+                ra1 = cur_mask_addr // MUST BE 3d0 (P1) or 3d1 (P2)
+                wa = 3d5           // Store result in TEMP
+                we = 1
+                wdsel = 2b00       // Take ALU output
+
+            S_CMPEQ_3:
+                alufn = OP_CMPEQ
+                asel = 0           // Selects RA1 (R5/TEMP)
+                bsel = 2b01        // Selects the 'constant' input
+                constant = 32d3    // The value to compare against
+                ra1 = 3d5          // Read the popcount result from R5
+                wa = 3d5           // Store the comparison result (0 or 1) back in R5
+                we = 1
+
+            S_BRANCH_POPCOUNT:
+                ra2 = 3d5
+
+            S_WIN_AND:
+                alufn = OP_AND
+                asel = 0
+                bsel = 2b10
+                ra1 = cur_mask_addr
+                wa = 3d5
+                we = 1
+                wdsel = 2b00
+
+            S_WIN_CMPEQ:
+                alufn = OP_CMPEQ
+                asel = 0
+                bsel = 2b10
+                ra1 = 3d5
+                wa = 3d5
+                we = 1
+                wdsel = 2b00
+
+            S_BRANCH_WIN:
+                ra2 = 3d5
+
+            S_WIN_NEXT:
+                we = 0
+
+            S_SWITCH_TURN:
+                alufn = OP_XOR
+                asel = 0
+                bsel = 2b01
+                constant = 32d1
+                ra1 = 3d4
+                wa = 3d4
+                we = 1
+                wdsel = 2b00
+
+            S_GAME_OVER:
+                game_over = 1
+        }
+    }
+}

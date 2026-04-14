@@ -1,0 +1,192 @@
+module game_datapath (
+    input clk,
+    input rst,
+    input slowclk,
+    input cell_buttons[9],
+    input start_btn,
+    output p1_leds[9],
+    output p2_leds[9],
+    output turn_led,
+    output game_over_led,
+    output winner_p1,
+    output winner_p2,
+    output cell_states[9][2]
+) {
+
+    const WIN_ROM = {
+        32b000000000000000000000001010100,
+        32b000000000000000000000100010001,
+        32b000000000000000000000100100100,
+        32b000000000000000000000010010010,
+        32b000000000000000000000001001001,
+        32b000000000000000000000111000000,
+        32b000000000000000000000000111000,
+        32b000000000000000000000000000111
+    }
+
+    game_regfile regfile(.clk(clk), .rst(rst))
+    alu alu_unit
+    game_fsm fsm(.clk(clk), .rst(rst))
+    game_control_unit cu
+
+    box_fsm box0(.clk(clk), .rst(rst))
+    box_fsm box1(.clk(clk), .rst(rst))
+    box_fsm box2(.clk(clk), .rst(rst))
+    box_fsm box3(.clk(clk), .rst(rst))
+    box_fsm box4(.clk(clk), .rst(rst))
+    box_fsm box5(.clk(clk), .rst(rst))
+    box_fsm box6(.clk(clk), .rst(rst))
+    box_fsm box7(.clk(clk), .rst(rst))
+    box_fsm box8(.clk(clk), .rst(rst))
+
+    sig any_press
+    sig btn_idx[4]
+    sig asel_out[32]
+    sig bsel_out[32]
+    sig wdsel_out[32]
+    sig p1_mask[9]
+    sig p2_mask[9]
+    sig saved[4]
+
+    always {
+        // ===== Button priority encoder =====
+        any_press = |cell_buttons
+        btn_idx = 0
+        if (cell_buttons[0]) btn_idx = 4d0
+        if (cell_buttons[1]) btn_idx = 4d1
+        if (cell_buttons[2]) btn_idx = 4d2
+        if (cell_buttons[3]) btn_idx = 4d3
+        if (cell_buttons[4]) btn_idx = 4d4
+        if (cell_buttons[5]) btn_idx = 4d5
+        if (cell_buttons[6]) btn_idx = 4d6
+        if (cell_buttons[7]) btn_idx = 4d7
+        if (cell_buttons[8]) btn_idx = 4d8
+
+        saved = fsm.saved_btn_out
+
+        // ===== FSM inputs =====
+        fsm.slowclk = slowclk
+        fsm.button_press = any_press
+        fsm.start_btn = start_btn
+        fsm.button_index = btn_idx
+        fsm.rd2_zero = ~|regfile.rd2
+        fsm.rd2_lsb = regfile.rd2[0]
+
+        // ===== FSM -> CU =====
+        cu.in_state = fsm.out_state
+        cu.cur_turn = fsm.cur_turn
+        cu.saved_btn = saved
+
+        // ===== CU -> REGFILE addresses =====
+        regfile.ra1 = cu.ra1
+        regfile.ra2 = cu.ra2
+        regfile.wa = cu.wa
+        regfile.we = cu.we
+
+        // ===== boxFSM connections (use saved btn) =====
+        box0.box_match = cu.do_place & (saved == 4d0)
+        box1.box_match = cu.do_place & (saved == 4d1)
+        box2.box_match = cu.do_place & (saved == 4d2)
+        box3.box_match = cu.do_place & (saved == 4d3)
+        box4.box_match = cu.do_place & (saved == 4d4)
+        box5.box_match = cu.do_place & (saved == 4d5)
+        box6.box_match = cu.do_place & (saved == 4d6)
+        box7.box_match = cu.do_place & (saved == 4d7)
+        box8.box_match = cu.do_place & (saved == 4d8)
+
+        box0.other_pressed = cu.do_place & (saved != 4d0)
+        box1.other_pressed = cu.do_place & (saved != 4d1)
+        box2.other_pressed = cu.do_place & (saved != 4d2)
+        box3.other_pressed = cu.do_place & (saved != 4d3)
+        box4.other_pressed = cu.do_place & (saved != 4d4)
+        box5.other_pressed = cu.do_place & (saved != 4d5)
+        box6.other_pressed = cu.do_place & (saved != 4d6)
+        box7.other_pressed = cu.do_place & (saved != 4d7)
+        box8.other_pressed = cu.do_place & (saved != 4d8)
+
+        box0.placed = cu.placed
+        box1.placed = cu.placed
+        box2.placed = cu.placed
+        box3.placed = cu.placed
+        box4.placed = cu.placed
+        box5.placed = cu.placed
+        box6.placed = cu.placed
+        box7.placed = cu.placed
+        box8.placed = cu.placed
+
+        // ============================================================
+        // MASK COMBINER: must come BEFORE WDSEL mux!
+        // Lucid always blocks evaluate top-to-bottom.
+        // If WDSEL reads p1_mask before these lines, it gets 0.
+        // ============================================================
+        p1_mask[0] = (box0.cell_state == 2b01)
+        p1_mask[1] = (box1.cell_state == 2b01)
+        p1_mask[2] = (box2.cell_state == 2b01)
+        p1_mask[3] = (box3.cell_state == 2b01)
+        p1_mask[4] = (box4.cell_state == 2b01)
+        p1_mask[5] = (box5.cell_state == 2b01)
+        p1_mask[6] = (box6.cell_state == 2b01)
+        p1_mask[7] = (box7.cell_state == 2b01)
+        p1_mask[8] = (box8.cell_state == 2b01)
+
+        p2_mask[0] = (box0.cell_state == 2b11)
+        p2_mask[1] = (box1.cell_state == 2b11)
+        p2_mask[2] = (box2.cell_state == 2b11)
+        p2_mask[3] = (box3.cell_state == 2b11)
+        p2_mask[4] = (box4.cell_state == 2b11)
+        p2_mask[5] = (box5.cell_state == 2b11)
+        p2_mask[6] = (box6.cell_state == 2b11)
+        p2_mask[7] = (box7.cell_state == 2b11)
+        p2_mask[8] = (box8.cell_state == 2b11)
+
+        // ===== ASEL: 0=RD1, 1=constant =====
+        if (cu.asel) {
+            asel_out = cu.constant
+        } else {
+            asel_out = regfile.rd1
+        }
+
+        // ===== BSEL: 00=RD2, 01=constant, 10=WIN_ROM =====
+        case (cu.bsel) {
+            2b00: bsel_out = regfile.rd2
+            2b01: bsel_out = cu.constant
+            2b10: bsel_out = WIN_ROM[fsm.win_rom_idx]
+            default: bsel_out = regfile.rd2
+        }
+
+        // ===== ALU =====
+        alu_unit.a = asel_out
+        alu_unit.b = bsel_out
+        alu_unit.alufn = cu.alufn
+
+        // ===== WDSEL: 00=ALU, 01=P1_mask, 10=P2_mask, 11=constant =====
+        // NOW p1_mask and p2_mask have their correct values
+        case (cu.wdsel) {
+            2b00: wdsel_out = alu_unit.out
+            2b01: wdsel_out = c{23b0, p1_mask}
+            2b10: wdsel_out = c{23b0, p2_mask}
+            2b11: wdsel_out = cu.constant
+            default: wdsel_out = alu_unit.out
+        }
+        regfile.wd = wdsel_out
+
+        // ===== Cell states for LED handler =====
+        cell_states[0] = box0.cell_state
+        cell_states[1] = box1.cell_state
+        cell_states[2] = box2.cell_state
+        cell_states[3] = box3.cell_state
+        cell_states[4] = box4.cell_state
+        cell_states[5] = box5.cell_state
+        cell_states[6] = box6.cell_state
+        cell_states[7] = box7.cell_state
+        cell_states[8] = box8.cell_state
+
+        // ===== Display =====
+        p1_leds = p1_mask
+        p2_leds = p2_mask
+        turn_led = fsm.cur_turn
+        game_over_led = cu.game_over
+        winner_p1 = cu.game_over & ~fsm.cur_turn
+        winner_p2 = cu.game_over & fsm.cur_turn
+    }
+}
