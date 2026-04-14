@@ -1,0 +1,26 @@
+// REGFILE: 8 x 32-bit registers
+// R0: P1_MASK  R1: P2_MASK  R4: TURN  R5: TEMP
+
+module game_regfile (
+    input clk,
+    input rst,
+    input ra1[3],
+    input ra2[3],
+    input wa[3],
+    input wd[32],
+    input we,
+    output rd1[32],
+    output rd2[32]
+) {
+
+    dff registers[8][32](#INIT(8x{{32h0}}), .clk(clk), .rst(rst))
+
+    always {
+        registers.d = registers.q
+        rd1 = registers.q[ra1]
+        rd2 = registers.q[ra2]
+        if (we) {
+            registers.d[wa] = wd
+        }
+    }
+}
