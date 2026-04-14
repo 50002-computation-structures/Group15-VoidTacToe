@@ -1,0 +1,193 @@
+testbench test_game {
+    sig clk
+
+    fun tick_clock() {
+        clk = 0
+        $tick()
+        clk = 1
+        $tick()
+    }
+
+    fun run40() {
+        repeat(40)
+            $tick_clock()
+    }
+
+    sig rst
+    sig cell_buttons[9]
+    sig start_btn
+
+    game_datapath dut(
+        .clk(clk), .rst(rst), .slowclk(1),
+        .cell_buttons(cell_buttons), .start_btn(start_btn)
+    )
+
+    test p1_wins_top_row {
+        clk = 0
+        rst = 0
+        cell_buttons = 9b0
+        start_btn = 0
+
+        rst = 1
+        $tick_clock()
+        rst = 0
+        repeat(3)
+            $tick_clock()
+
+        // P1 cell 0
+        cell_buttons = 9b000000001
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $print("P1=%b turn=%d", dut.p1_leds, dut.turn_led)
+        $assert(dut.p1_leds == 9b000000001)
+        $assert(dut.turn_led == 1)
+        $print("PASS: P1 placed cell 0")
+
+        // P2 cell 3
+        cell_buttons = 9b000001000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $assert(dut.p2_leds == 9b000001000)
+        $assert(dut.turn_led == 0)
+        $print("PASS: P2 placed cell 3")
+
+        // P1 cell 1
+        cell_buttons = 9b000000010
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $assert(dut.p1_leds == 9b000000011)
+        $assert(dut.turn_led == 1)
+        $print("PASS: P1 placed cell 1")
+
+        // P2 cell 4
+        cell_buttons = 9b000010000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $assert(dut.p2_leds == 9b000011000)
+        $assert(dut.turn_led == 0)
+        $print("PASS: P2 placed cell 4")
+
+        // P1 cell 2 -> top row WIN
+        cell_buttons = 9b000000100
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $print("P1=%b go=%d w1=%d", dut.p1_leds, dut.game_over_led, dut.winner_p1)
+        $assert(dut.p1_leds == 9b000000111)
+        $assert(dut.game_over_led == 1)
+        $assert(dut.winner_p1 == 1)
+        $print("PASS: P1 wins top row")
+
+        // reset
+        start_btn = 1
+        $tick_clock()
+        start_btn = 0
+        repeat(5)
+            $tick_clock()
+        $assert(dut.game_over_led == 0)
+        $print("PASS: Reset works")
+    }
+
+    test reject_occupied {
+        clk = 0
+        rst = 0
+        cell_buttons = 9b0
+        start_btn = 0
+
+        rst = 1
+        $tick_clock()
+        rst = 0
+        repeat(3)
+            $tick_clock()
+
+        // P1 places cell 4
+        cell_buttons = 9b000010000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $assert(dut.p1_leds == 9b000010000)
+        $assert(dut.turn_led == 1)
+        $print("PASS: P1 placed cell 4")
+
+        // P2 tries cell 4 -> rejected
+        cell_buttons = 9b000010000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $assert(dut.turn_led == 1)
+        $print("PASS: Occupied cell rejected")
+
+        // P2 places cell 0
+        cell_buttons = 9b000000001
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+        $assert(dut.p2_leds == 9b000000001)
+        $assert(dut.turn_led == 0)
+        $print("PASS: P2 placed cell 0")
+    }
+
+    test vanishing {
+        clk = 0
+        rst = 0
+        cell_buttons = 9b0
+        start_btn = 0
+
+        rst = 1
+        $tick_clock()
+        rst = 0
+        repeat(3)
+            $tick_clock()
+
+        // P1->0, P2->5, P1->4, P2->3, P1->8, P2->1
+        cell_buttons = 9b000000001
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+
+        cell_buttons = 9b000100000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+
+        cell_buttons = 9b000010000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+
+        cell_buttons = 9b000001000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+
+        cell_buttons = 9b100000000
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+
+        cell_buttons = 9b000000010
+        $tick_clock()
+        cell_buttons = 9b0
+        $run40()
+
+        $print("P1=%b P2=%b", dut.p1_leds, dut.p2_leds)
+        $assert(dut.p1_leds == 9b100010001)
+        $assert(dut.p2_leds == 9b000101010)
+        $print("PASS: 3 moves each correct")
+
+        // P1 cell 6 -> 4th move -> cell 0 vanishes
+        cell_buttons = 9b001000000
+        $tick_clock()
+        cell_buttons = 9b0
+        repeat(50)
+            $tick_clock()
+
+        $print("P1 after vanish: %b", dut.p1_leds)
+        $assert(dut.p1_leds == 9b101010000)
+        $print("PASS: Cell 0 vanished, P1 has 4,6,8")
+    }
+}
