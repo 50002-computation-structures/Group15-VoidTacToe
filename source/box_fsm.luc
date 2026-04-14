@@ -1,0 +1,60 @@
+// boxFSM: 1 instance per cell (9 total)
+// EMPTY->M1: box_match (THIS cell pressed)
+// M1->M2->M3->EMPTY: other_pressed (ANOTHER cell pressed by same player)
+
+module box_fsm (
+    input clk,
+    input rst,
+    input box_match,
+    input other_pressed,
+    input placed[2],
+    output cell_state[2]
+) {
+
+    enum States {EMPTY, P1_M1, P1_M2, P1_M3, P2_M1, P2_M2, P2_M3}
+    dff state[$width(States)](.clk(clk), .rst(rst))
+
+    always {
+        cell_state = 2b00
+        state.d = state.q
+
+        case (state.q) {
+            States.EMPTY:
+                cell_state = 2b00
+                if (box_match) {
+                    if (placed == 2b01) state.d = States.P1_M1
+                    if (placed == 2b11) state.d = States.P2_M1
+                }
+
+            States.P1_M1:
+                cell_state = 2b01
+                if (other_pressed & (placed == 2b01))
+                    state.d = States.P1_M2
+
+            States.P1_M2:
+                cell_state = 2b01
+                if (other_pressed & (placed == 2b01))
+                    state.d = States.P1_M3
+
+            States.P1_M3:
+                cell_state = 2b01
+                if (other_pressed & (placed == 2b01))
+                    state.d = States.EMPTY
+
+            States.P2_M1:
+                cell_state = 2b11
+                if (other_pressed & (placed == 2b11))
+                    state.d = States.P2_M2
+
+            States.P2_M2:
+                cell_state = 2b11
+                if (other_pressed & (placed == 2b11))
+                    state.d = States.P2_M3
+
+            States.P2_M3:
+                cell_state = 2b11
+                if (other_pressed & (placed == 2b11))
+                    state.d = States.EMPTY
+        }
+    }
+}
