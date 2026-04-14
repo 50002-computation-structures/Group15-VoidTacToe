@@ -1,0 +1,40 @@
+testbench test_popcount {
+    popcount popcount
+
+    const TEST_CASES_POPCOUNT = $reverse({
+        // {input_a, expected_output}
+        // 1. all zeros
+        c{32h00000000, 32d0},
+        // 2. single bit set (LSB)
+        c{32h00000001, 32d1},
+        // 3. single bit set (MSB)
+        c{32h80000000, 32d1},
+        // 4. two bits set
+        c{32h00000003, 32d2},
+        // 5. alternating bits (16 set)
+        c{32hAAAAAAAA, 32d16},
+        // 6. alternating bits other way (16 set)
+        c{32h55555555, 32d16},
+        // 7. all ones (32 set)
+        c{32hFFFFFFFF, 32d32},
+        // 8. 9-bit board full (tic tac toe)
+        c{32h000001FF, 32d9},
+        // 9. 3 bits in board position
+        c{32h00000150, 32d3},
+        // 10. 5 bits scattered
+        c{32h00010101, 32d3},
+        // 11. low byte full
+        c{32h000000FF, 32d8},
+        // 12. upper half full
+        c{32hFFFF0000, 32d16}
+    })
+
+    test popcountTest {
+        repeat(i, 12) {
+            popcount.a = TEST_CASES_POPCOUNT[i][63:32]
+            $tick()
+            $assert(popcount.pop == TEST_CASES_POPCOUNT[i][31:0])
+            $print("PASS test case: %d", i+1)
+        }
+    }
+}

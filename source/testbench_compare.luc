@@ -1,0 +1,43 @@
+testbench test_compare {
+    compare_unit compare
+    const TEST_CASES_COMPARE = $reverse({
+            // 1. CMPEQ true (z=1)
+            c{1b1, 1b0, 1b0, 2b01, 1b1},
+            // 2. CMPEQ false (z=0)
+            c{1b0, 1b1, 1b1, 2b01, 1b0},
+            // 3. CMPEQ false (z=0, no overflow)
+            c{1b0, 1b0, 1b0, 2b01, 1b0},
+            // 4. CMPLT true (n^v=1, normal negative)
+            c{1b0, 1b0, 1b1, 2b10, 1b1},
+            // 5. CMPLT true (n^v=1, overflow sign flip)
+            c{1b0, 1b1, 1b0, 2b10, 1b1},
+            // 6. CMPLT false (n^v=0)
+            c{1b0, 1b0, 1b0, 2b10, 1b0},
+            // 7. CMPLT false (z=1, equal not less than)
+            c{1b1, 1b0, 1b0, 2b10, 1b0},
+            // 8. CMPLT false (n^v=0, overflow masks sign)
+            c{1b0, 1b1, 1b1, 2b10, 1b0},
+            // 9. CMPLE true via equality (z=1)
+            c{1b1, 1b0, 1b0, 2b11, 1b1},
+            // 10. CMPLE true via less-than (n^v=1)
+            c{1b0, 1b0, 1b1, 2b11, 1b1},
+            // 11. CMPLE true (n^v=1, overflow)
+            c{1b0, 1b1, 1b0, 2b11, 1b1},
+            // 12. CMPLE false (n^v=0, z=0)
+            c{1b0, 1b0, 1b0, 2b11, 1b0},
+            // 13. CMPLE false (n^v=0, overflow masks sign)
+            c{1b0, 1b1, 1b1, 2b11, 1b0}
+        })
+    
+    test compareTest {
+        repeat (i, 13){
+            compare.z = TEST_CASES_COMPARE[i][5]
+            compare.v = TEST_CASES_COMPARE[i][4]
+            compare.n = TEST_CASES_COMPARE[i][3]
+            compare.alufn = c{3b110,TEST_CASES_COMPARE[i][2:1], 1b1}
+            $tick()
+            $assert(compare.cmp == TEST_CASES_COMPARE[i][0])
+            $print("PASS test case: %d", i+1)
+        }
+    }
+}

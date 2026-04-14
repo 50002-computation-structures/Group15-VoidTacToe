@@ -1,0 +1,43 @@
+module popcount (
+    input a[32],
+    output pop[32]
+) {
+    // Level 1: 16 pairs of 1-bit → 2-bit sums
+    sig l1[16][2]
+    // Level 2: 8 pairs of 2-bit → 3-bit sums
+    sig l2[8][3]
+    // Level 3: 4 pairs of 3-bit → 4-bit sums
+    sig l3[4][4]
+    // Level 4: 2 pairs of 4-bit → 5-bit sums
+    sig l4[2][5]
+    // Level 5: final 6-bit sum
+    sig l5[6]
+
+    always {
+        // Level 1: add adjacent single bits
+        repeat(i, 16) {
+            l1[i] = a[2*i] + a[2*i+1]
+        }
+
+        // Level 2: add adjacent 2-bit sums
+        repeat(i, 8) {
+            l2[i] = l1[2*i] + l1[2*i+1]
+        }
+
+        // Level 3: add adjacent 3-bit sums
+        repeat(i, 4) {
+            l3[i] = l2[2*i] + l2[2*i+1]
+        }
+
+        // Level 4: add adjacent 4-bit sums
+        repeat(i, 2) {
+            l4[i] = l3[2*i] + l3[2*i+1]
+        }
+
+        // Level 5: final sum
+        l5 = l4[0] + l4[1]
+
+        // Zero-extend to 32 bits
+        pop = c{26b0, l5}
+    }
+}

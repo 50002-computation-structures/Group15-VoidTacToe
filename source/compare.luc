@@ -1,0 +1,20 @@
+module compare_unit #(
+        SIZE = 8 : SIZE > 0
+)(
+    input z,
+    input v,
+    input n,
+    input alufn[6],
+    output cmp
+) {
+    mux4to1 mux4
+    always {
+        mux4.a = 0
+        mux4.b = z
+        mux4.c = n ^ v
+        mux4.d = (n ^ v) | z
+        mux4.sel1 = alufn[1]
+        mux4.sel2 = alufn[2]
+        cmp = mux4.out
+    }
+}

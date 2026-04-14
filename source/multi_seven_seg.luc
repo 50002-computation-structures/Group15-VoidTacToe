@@ -1,0 +1,38 @@
+module multi_seven_seg #(
+    DIGITS = 4 : DIGITS > 0,
+    DIV    = $is_sim() ? 0 : 16 : DIV >= 0
+)(
+    input clk,                // clock
+    input rst,                // reset
+    input values[DIGITS][4],  // BCD values for each digit
+    output seg[7],            // active‑low segments
+    output sel[DIGITS]        // active‑low digit enables
+) {
+
+    // number of bits required to index DIGITS
+    const DIGIT_BITS = $clog2(DIGITS)
+
+    // refresh counter cycles through digits
+    .clk(clk), .rst(rst) {
+        counter ctr(
+            #DIV(DIV),
+            #SIZE(DIGIT_BITS),
+            #TOP(DIGITS - 1)
+        )
+    }
+
+    seven_seg seg_dec  // segment decoder
+    decoder digit_dec(#WIDTH(DIGIT_BITS)) // one‑hot digit decode
+
+    always {
+        // feed the active digit value to the 7‑segment decoder
+        seg_dec.char = values[ctr.value]
+        // invert outputs because IO Shield is active‑low
+        seg = ~seg_dec.segs
+
+        // decode the current digit index to one‑hot
+        digit_dec.in = ctr.value
+        // invert because IO Shield selects by active‑low
+        sel = ~digit_dec.out
+    }
+}

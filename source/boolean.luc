@@ -1,0 +1,23 @@
+module boolean #(
+    SIZE = 32 : SIZE > 0
+)(
+    input a[SIZE],
+    input b[SIZE],
+    input alufn[6],
+    output bool[SIZE]
+){
+    mux4to1 m[SIZE]
+    
+    always{
+        m.a = 32x{alufn[0]}
+        m.b = 32x{alufn[1]}
+        m.c = 32x{alufn[2]}
+        m.d = 32x{alufn[3]}
+        bool = m.out
+        
+        repeat(i, SIZE){
+            m.sel1[i] = a[i]
+            m.sel2[i] = b[i]
+        }
+    }
+}

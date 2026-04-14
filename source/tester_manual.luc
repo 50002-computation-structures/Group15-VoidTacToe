@@ -1,0 +1,122 @@
+module tester_manual_alu (
+    input clk,
+    input rst,
+    input a[16],
+    input alufn[6],
+    input io_button0_press,
+    input io_button1_press,
+    output out[32],
+    output outz,
+    output outv,
+    output outn,
+    output state[3]
+    
+) {
+    .clk(clk), .rst(rst) {
+        dff current_state[3]
+        dff a_reg[32]
+        dff b_reg[32]
+        dff out_reg_upper[16]
+        dff out_reg_lower[16]
+        dff alufn_reg[6]
+    }
+    
+    // button_conditioner and edge_detector only need clk
+    .clk(clk) {
+        button_conditioner btn_cond0(#CLK_FREQ($is_sim() ? 100 : 100000000), .in(io_button0_press))
+        edge_detector btn_edge0(#RISE(1), #FALL(0), .in(btn_cond0.out))
+        
+        button_conditioner btn_cond1(#CLK_FREQ($is_sim() ? 100 : 100000000), .in(io_button1_press))
+        edge_detector btn_edge1(#RISE(1), #FALL(0), .in(btn_cond1.out))
+    }
+    
+    beta_alu beta_alu
+
+    always {
+        out = 32b0
+        outz = beta_alu.outz
+        outv = beta_alu.outv
+        outn = beta_alu.outn
+        
+        beta_alu.a = a_reg.q
+        beta_alu.b = b_reg.q
+        beta_alu.alufn = alufn_reg.q
+        
+        state = current_state.q
+        current_state.d = current_state.q
+        
+        a_reg.d = a_reg.q
+        b_reg.d = b_reg.q
+        out_reg_lower.d = out_reg_lower.q
+        out_reg_upper.d = out_reg_upper.q
+        
+        case (current_state.q) {
+            3d0:  // latch lower 16 bits of A
+                a_reg.d = c{a_reg.q[31:16], a}
+                if (btn_edge0.out) {
+                    current_state.d = 3d1
+                }
+            
+            3d1:  // latch upper 16 bits of A
+                a_reg.d = c{a, a_reg.q[15:0]}
+                if (btn_edge0.out) {
+                    current_state.d = 3d2
+                }
+            
+            3d2: 
+                b_reg.d = c{b_reg.q[31:16], a}
+                if (btn_edge0.out) {
+                    current_state.d = 3d3
+                }
+            
+            3d3:
+                b_reg.d = c{a, b_reg.q[15:0]}
+                if (btn_edge0.out) {
+                    alufn_reg.d = alufn
+                    current_state.d = 3d4
+                }
+            
+            3d4: 
+                if (btn_edge0.out) {
+                    out_reg_lower.d = beta_alu.out[15:0]
+                    out_reg_upper.d = beta_alu.out[31:16]
+                    current_state.d = 3d5
+                }
+            
+            3d5: // show low 16
+                out = c{16b0, out_reg_lower.q}
+            
+                if (btn_edge0.out) {
+                        current_state.d = 3d0
+                        a_reg.d = 32b0
+                        b_reg.d = 32b0
+                    
+                        out_reg_lower.d = 16b0
+                        out_reg_upper.d = 16b0
+                        }
+            
+                if (btn_edge1.out) {
+                        current_state.d = 3d6
+                    }
+            
+            3d6:
+                out = c{16b0, out_reg_upper.q}
+            
+                if (btn_edge0.out) {
+                        current_state.d = 3d0
+                        a_reg.d = 32b0
+                        b_reg.d = 32b0
+                    
+                        out_reg_lower.d = 16b0
+                        out_reg_upper.d = 16b0
+                        }
+            
+                if (btn_edge1.out) {
+                        current_state.d = 3d5
+                    }
+            
+            default:
+                state = current_state.q
+        }
+    }
+}

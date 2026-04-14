@@ -1,0 +1,86 @@
+module compact_shifter (
+    input alufn[6],
+    input a[32],
+    input b[5],
+    output out[32]
+) {
+    
+    mux2to1 input_mux[32]
+    mux2to1 output_mux[32]
+    mux2to1 pad_mux
+    
+    mux2to1 stage16[32]
+    mux2to1 stage8[32]
+    mux2to1 stage4[32]
+    mux2to1 stage2[32]
+    mux2to1 stage1[32]
+    
+    sig reversed_a[32]
+    sig reversed_shifted[32]
+    sig pad_bit
+    sig is_left
+    sig is_sra
+
+    always {
+        is_left = ~alufn[0] // left indicator
+        is_sra = alufn[1] // right arithmatic indicator
+        
+        // 32bit reverse, input A[31:0]
+        repeat(i, 32) {
+            reversed_a[i] = a[31-i]
+        } // becomes RA[31:0] in schematic
+        
+        // input A[31:0] and RA[31:0]
+        // selector ALUFN[0] left indicator
+        // output in schematic INP[31:0]
+        input_mux.sel = 32x{~is_left} 
+        input_mux.a = a
+        input_mux.b = reversed_a
+       
+        // mux that creates the padding
+        // input 0s and A[31]
+        // selector ALUFN[1] right aritmetic indicator
+        pad_mux.sel = is_sra
+        pad_mux.a = 1b0
+        pad_mux.b = a[31]
+        pad_bit = pad_mux.out
+        
+        // cascading shifts by powers of 2
+        // 32bit left shifter
+        // each mux selector follow B[4:0]
+        // follows shifter schematic of grey-blue-yellow-red-purple muxes decreasing bit.
+        stage16.sel = 32x{b[4]}
+        stage16.a = input_mux.out
+        stage16.b = c{input_mux.out[15:0], 16x{pad_bit}}
+        
+        stage8.sel = 32x{b[3]}
+        stage8.a = stage16.out
+        stage8.b = c{stage16.out[23:0], 8x{pad_bit}}
+        
+        stage4.sel = 32x{b[2]}
+        stage4.a = stage8.out
+        stage4.b = c{stage8.out[27:0], 4x{pad_bit}}
+        
+        stage2.sel = 32x{b[1]}
+        stage2.a = stage4.out
+        stage2.b = c{stage4.out[29:0], 2x{pad_bit}}
+        
+        stage1.sel = 32x{b[0]}
+        stage1.a = stage2.out
+        stage1.b = c{stage2.out[30:0], 1x{pad_bit}}
+        
+        // 32bit reverse back
+        repeat(i, 32) {
+            reversed_shifted[i] = stage1.out[31-i]
+        }
+        
+        // select between shifted or reversed_shifted
+        // shifted is SHL
+        // reversed shifted is SHR or SRA
+        output_mux.sel = 32x{~is_left}
+        output_mux.a = stage1.out
+        output_mux.b = reversed_shifted
+        
+        out = output_mux.out
+    }
+}

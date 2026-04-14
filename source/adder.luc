@@ -1,0 +1,33 @@
+module add_and_sub #(
+    SIZE = 32 : SIZE > 1
+) (
+    input a[SIZE],
+    input b[SIZE],
+    input is_sub,
+    output out[SIZE],
+    output z,
+    output v,
+    output n
+) {
+    rca adder(#SIZE(SIZE))
+    sig b_mod[SIZE]
+    
+    always {
+        adder.cin = is_sub
+        repeat(i, SIZE) {
+        b_mod[i] = b[i] ^ is_sub
+        }
+        
+        adder.cin = is_sub
+        repeat(i, SIZE) {
+            adder.a[i] = a[i]
+            adder.b[i] = b_mod[i]
+            out[i] = adder.s[i]
+        }
+        
+        z = ~|adder.s
+        v = (a[SIZE-1] & b_mod[SIZE-1] & ~adder.s[SIZE-1]) | 
+            (~a[SIZE-1] & ~b_mod[SIZE-1] & adder.s[SIZE-1])
+        n = adder.s[SIZE-1]
+    }
+}

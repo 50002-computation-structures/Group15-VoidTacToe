@@ -1,0 +1,27 @@
+module rca #(
+    SIZE = 32 : SIZE > 1
+)(
+    input a[SIZE],
+    input b[SIZE],
+    input cin,
+    output s[SIZE],
+    output cout
+) {
+    fa fa[SIZE]
+    
+    always {
+        s = 0
+        cout = 0
+        
+        fa.a = a
+        fa.b = b
+        fa.cin[0] = cin
+        
+        repeat(i, SIZE-1){
+            fa.cin[i+1] = fa.cout[i]
+        }
+        
+        s = fa.s
+        cout = fa.cout[SIZE-1]
+    }
+}

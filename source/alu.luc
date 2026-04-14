@@ -1,0 +1,55 @@
+module beta_alu (
+    input alufn[6],
+    input a[32],
+    input b[32],
+    output out[32],
+    output outz,
+    output outv,
+    output outn
+) {
+    add_and_sub adder
+    boolean bool
+    compact_shifter shifter
+    compare_unit comp
+    popcount popcnt
+
+    always {
+        out = 32b0
+
+        adder.a = a
+        adder.b = b
+        adder.is_sub = alufn[0]
+
+        // multi.a = a
+        // multi.b = b
+
+        bool.a = a
+        bool.b = b
+        bool.alufn = alufn
+
+        shifter.a = a
+        shifter.b = b[4:0]
+        shifter.alufn = alufn
+
+        comp.z = adder.z
+        comp.v = adder.v
+        comp.n = adder.n
+        comp.alufn = alufn
+
+        popcnt.a = a
+
+        outz = adder.z
+        outv = adder.v
+        outn = adder.n
+
+        if (~|(alufn[5:4] ^ 2b00)) {
+            if (~|(alufn[1:0] ^ 2b10)) out = a * b
+            else if (alufn[2]) out = popcnt.pop
+            else out = adder.out
+        }
+        else if (~|(alufn[5:4] ^ 2b01)) out = bool.bool
+        else if (~|(alufn[5:4] ^ 2b10)) out = shifter.out
+        else if (~|(alufn[5:4] ^ 2b11)) out = comp.cmp
+        else out = 32b0
+    }
+}
