@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Tue Apr 14 17:37:05 2026
+# Process ID         : 1630344
+# Current directory  : /home/j31415/repos/VanishingTicTacToe_bak/build/vivado/beta.runs/synth_1
+# Command line       : vivado -log alchitry_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source alchitry_top.tcl
+# Log file           : /home/j31415/repos/VanishingTicTacToe_bak/build/vivado/beta.runs/synth_1/alchitry_top.vds
+# Journal file       : /home/j31415/repos/VanishingTicTacToe_bak/build/vivado/beta.runs/synth_1/vivado.jou
+# Running On         : j31415-s3pro
+# Platform           : ManjaroLinux
+# Operating System   : Manjaro Linux
+# Processor Detail   : Intel(R) Core(TM) Ultra 5 225H
+# CPU Frequency      : 1650.676 MHz
+# CPU Physical cores : 14
+# CPU Logical cores  : 14
+# Host memory        : 33108 MB
+# Swap memory        : 77309 MB
+# Total Virtual      : 110417 MB
+# Available Virtual  : 41731 MB
+#-----------------------------------------------------------
+source alchitry_top.tcl -notrace

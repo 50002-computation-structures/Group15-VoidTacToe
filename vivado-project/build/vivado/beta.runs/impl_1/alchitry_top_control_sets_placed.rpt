@@ -1,0 +1,106 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Apr 14 17:38:38 2026
+| Host         : j31415-s3pro running 64-bit Manjaro Linux
+| Command      : report_control_sets -verbose -file alchitry_top_control_sets_placed.rpt
+| Design       : alchitry_top
+| Device       : xc7a35t
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Control Set Information
+
+Table of Contents
+-----------------
+1. Summary
+2. Histogram
+3. Flip-Flop Distribution
+4. Detailed Control Set Information
+
+1. Summary
+----------
+
++----------------------------------------------------------+-------+
+|                          Status                          | Count |
++----------------------------------------------------------+-------+
+| Total control sets                                       |    28 |
+|    Minimum number of control sets                        |    28 |
+|    Addition due to synthesis replication                 |     0 |
+|    Addition due to physical synthesis replication        |     0 |
+| Unused register locations in slices containing registers |    97 |
++----------------------------------------------------------+-------+
+* Control sets can be merged at opt_design using control_set_merge or merge_equivalent_drivers
+** Run report_qor_suggestions for automated merging and remapping suggestions
+
+
+2. Histogram
+------------
+
++--------------------+-------+
+|       Fanout       | Count |
++--------------------+-------+
+| Total control sets |    28 |
+| >= 0 to < 4        |     1 |
+| >= 4 to < 6        |     3 |
+| >= 6 to < 8        |     0 |
+| >= 8 to < 10       |     1 |
+| >= 10 to < 12      |     1 |
+| >= 12 to < 14      |     0 |
+| >= 14 to < 16      |     0 |
+| >= 16              |    22 |
++--------------------+-------+
+* Control sets can be remapped at either synth_design or opt_design
+
+
+3. Flip-Flop Distribution
+-------------------------
+
++--------------+-----------------------+------------------------+-----------------+--------------+
+| Clock Enable | Synchronous Set/Reset | Asynchronous Set/Reset | Total Registers | Total Slices |
++--------------+-----------------------+------------------------+-----------------+--------------+
+| No           | No                    | No                     |              32 |           13 |
+| No           | No                    | Yes                    |               8 |            2 |
+| No           | Yes                   | No                     |              37 |           12 |
+| Yes          | No                    | No                     |               0 |            0 |
+| Yes          | No                    | Yes                    |               0 |            0 |
+| Yes          | Yes                   | No                     |             474 |          168 |
++--------------+-----------------------+------------------------+-----------------+--------------+
+
+
+4. Detailed Control Set Information
+-----------------------------------
+
++-----------------+----------------------------------------------------+-----------------------------------------------------+------------------+----------------+--------------+
+|   Clock Signal  |                    Enable Signal                   |                   Set/Reset Signal                  | Slice Load Count | Bel Load Count | Bels / Slice |
++-----------------+----------------------------------------------------+-----------------------------------------------------+------------------+----------------+--------------+
+|  clk_10m_q_BUFG | board_display/ws2812_out_q_i_1_n_0                 | game/regfile/SR[0]                                  |                1 |              1 |         1.00 |
+|  clk_IBUF_BUFG  |                                                    | reset_slow_cond/AS[0]                               |                1 |              4 |         4.00 |
+|  clk_10m_q_BUFG |                                                    | reset_slow_cond/AS[0]                               |                1 |              4 |         4.00 |
+|  clk_10m_q_BUFG | game/fsm/D_saved_btn_d[0]                          | game/regfile/SR[0]                                  |                2 |              4 |         2.00 |
+|  clk_10m_q_BUFG | board_display/pixel_index_d[0]                     | game/regfile/SR[0]                                  |                3 |              8 |         2.67 |
+|  clk_10m_q_BUFG |                                                    | auto_seq_cond/SR[0]                                 |                3 |             10 |         3.33 |
+|  clk_10m_q_BUFG | game/fsm/D_state_d[0]                              | game/regfile/SR[0]                                  |                5 |             18 |         3.60 |
+|  clk_10m_q_BUFG | board_display/frame_cell_states_q[8][1]_i_1_n_0    | game/regfile/SR[0]                                  |               11 |             18 |         1.64 |
+|  clk_10m_q_BUFG | gen_cell_switch[6].cell_cond/D_ctr_q[0]_i_2__8_n_0 | gen_cell_switch[6].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[4].cell_cond/D_ctr_q_reg[8]_0      | gen_cell_switch[4].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[5].cell_cond/D_ctr_q[0]_i_2__5_n_0 | gen_cell_switch[5].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | auto_seq_cond/D_ctr_q[0]_i_2__0_n_0                | auto_seq_cond/sync/D_pipe_q_reg[1]_0                |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[2].cell_cond/D_ctr_q_reg[15]_0     | gen_cell_switch[2].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[1].cell_cond/D_ctr_q_reg[15]_0     | gen_cell_switch[1].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[0].cell_cond/D_ctr_q[0]_i_2__1_n_0 | gen_cell_switch[0].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[7].cell_cond/D_ctr_q_reg[8]_0      | gen_cell_switch[7].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[8].cell_cond/D_ctr_q[0]_i_2__7_n_0 | gen_cell_switch[8].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | gen_cell_switch[3].cell_cond/D_ctr_q_reg[8]_0      | gen_cell_switch[3].cell_cond/sync/D_pipe_q_reg[1]_0 |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | start_cond/sel                                     | start_cond/sync/clear                               |                5 |             19 |         3.80 |
+|  clk_10m_q_BUFG | board_display/bit_index_q[4]_i_1_n_0               | game/regfile/SR[0]                                  |                6 |             24 |         4.00 |
+|  clk_10m_q_BUFG |                                                    | auto_seq_state_q_reg_n_0_[0]                        |                9 |             27 |         3.00 |
+|  clk_10m_q_BUFG |                                                    |                                                     |               13 |             32 |         2.46 |
+|  clk_10m_q_BUFG | board_display/reset_counter_q[31]_i_1_n_0          | game/regfile/SR[0]                                  |                9 |             32 |         3.56 |
+|  clk_10m_q_BUFG | board_display/phase_counter_q[31]_i_1_n_0          | game/regfile/SR[0]                                  |               10 |             32 |         3.20 |
+|  clk_10m_q_BUFG | game/fsm/FSM_onehot_D_state_q_reg[15]_3[0]         | game/regfile/SR[0]                                  |               17 |             32 |         1.88 |
+|  clk_10m_q_BUFG | game/fsm/FSM_onehot_D_state_q_reg[15]_2[0]         | game/regfile/SR[0]                                  |               15 |             32 |         2.13 |
+|  clk_10m_q_BUFG | game/fsm/FSM_onehot_D_state_q_reg[15]_1[0]         | game/regfile/SR[0]                                  |               17 |             32 |         1.88 |
+|  clk_10m_q_BUFG | game/fsm/E[0]                                      | game/regfile/SR[0]                                  |               17 |             32 |         1.88 |
++-----------------+----------------------------------------------------+-----------------------------------------------------+------------------+----------------+--------------+
+
+

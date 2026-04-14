@@ -1,0 +1,43 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Mon Apr 13 15:46:41 2026
+# Process ID         : 130729
+# Current directory  : /home/j31415/repos/VanishingTicTacToe
+# Command line       : vivado -mode batch -source /tmp/list_hw.tcl
+# Log file           : /home/j31415/repos/VanishingTicTacToe/vivado.log
+# Journal file       : /home/j31415/repos/VanishingTicTacToe/vivado.jou
+# Running On         : j31415-WS1
+# Platform           : Ubuntu
+# Operating System   : Ubuntu 24.04.4 LTS
+# Processor Detail   : Intel(R) Core(TM) i5-9400 CPU @ 2.90GHz
+# CPU Frequency      : 3899.984 MHz
+# CPU Physical cores : 6
+# CPU Logical cores  : 6
+# Host memory        : 66804 MB
+# Swap memory        : 34359 MB
+# Total Virtual      : 101164 MB
+# Available Virtual  : 88311 MB
+#-----------------------------------------------------------
+source /tmp/list_hw.tcl
+# open_hw_manager
+# connect_hw_server -allow_non_jtag
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2025.2.0
+  ****** Build date   : Nov 14 2025-07:16:52
+    **** Build number : 2025.2.1763075812
+      ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+      ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+# open_hw_target
+ERROR: [Labtoolstcl 44-469] There is no current hw_target.
+INFO: [Common 17-206] Exiting Vivado at Mon Apr 13 15:46:47 2026...
