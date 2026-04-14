@@ -1,0 +1,89 @@
+testbench testbench_alu {
+    alu alu
+
+    const TEST_VALUES_ALU = $reverse(
+        {
+            // ===== ADD/SUB (00-07) =====
+            c{32h00000000, 32h00000000, 6b000000, c{32h00000000, 1b1,1b0,1b0}}, // 00 ADD 0+0
+            c{32h7FFFFFFF, 32h00000001, 6b000000, c{32h80000000, 1b0,1b1,1b1}}, // 01 ADD pos overflow
+            c{32hFFFFFFFD, 32hFFFFFFFB, 6b000000, c{32hFFFFFFF8, 1b0,1b0,1b1}}, // 02 ADD two negatives
+            c{32h0000000A, 32hFFFFFFFF, 6b000000, c{32h00000009, 1b0,1b0,1b0}}, // 03 ADD decrement
+            c{32h00000007, 32h00000005, 6b000001, c{32h00000002, 1b0,1b0,1b0}}, // 04 SUB 7-5
+            c{32h80000000, 32h00000001, 6b000001, c{32h7FFFFFFF, 1b0,1b1,1b0}}, // 05 SUB neg overflow
+            c{32h0000002A, 32h0000002A, 6b000001, c{32h00000000, 1b1,1b0,1b0}}, // 06 SUB equal Z
+            c{32h00000005, 32hFFFFFFFD, 6b000001, c{32h00000008, 1b0,1b0,1b0}}, // 07 SUB pos-neg
+
+            // ===== Boolean (08-18) =====
+            c{32hFF00FF00, 32h0F0F0F0F, 6b011000, c{32h0F000F00, 1b0,1b0,1b0}}, // 08 AND mask
+            c{32hAAAAAAAA, 32h55555555, 6b011000, c{32h00000000, 1b0,1b0,1b1}}, // 09 AND no common
+            c{32h12345678, 32hFFFFFFFF, 6b011000, c{32h12345678, 1b0,1b0,1b0}}, // 10 AND identity
+            c{32hFF00FF00, 32h00FF00FF, 6b011110, c{32hFFFFFFFF, 1b0,1b0,1b1}}, // 11 OR disjoint
+            c{32h12345678, 32h00000000, 6b011110, c{32h12345678, 1b0,1b0,1b0}}, // 12 OR one zero
+            c{32h12345678, 32hFFFFFFFF, 6b011110, c{32hFFFFFFFF, 1b0,1b0,1b0}}, // 13 OR saturation
+            c{32hDEADBEEF, 32hDEADBEEF, 6b010110, c{32h00000000, 1b0,1b0,1b1}}, // 14 XOR cancel
+            c{32hAAAAAAAA, 32h55555555, 6b010110, c{32hFFFFFFFF, 1b0,1b0,1b1}}, // 15 XOR alternating
+            c{32hDEADBEEF, 32h00000000, 6b010110, c{32hDEADBEEF, 1b0,1b0,1b1}}, // 16 XOR identity
+            c{32h12345678, 32hFFFFFFFF, 6b011010, c{32h12345678, 1b0,1b0,1b0}}, // 17 A pass
+            c{32h00000000, 32hDEADBEEF, 6b011010, c{32h00000000, 1b0,1b0,1b1}}, // 18 A zero
+
+            // ===== Compare (19-30) =====
+            c{32h00000005, 32h00000005, 6b110011, c{32h00000001, 1b1,1b0,1b0}}, // 19 CMPEQ true
+            c{32h00000000, 32h00000001, 6b110011, c{32h00000000, 1b0,1b0,1b1}}, // 20 CMPEQ false
+            c{32h00000000, 32h00000000, 6b110011, c{32h00000001, 1b1,1b0,1b0}}, // 21 CMPEQ zero
+            c{32hFFFFFFFD, 32h00000000, 6b110101, c{32h00000001, 1b0,1b0,1b1}}, // 22 CMPLT -3<0
+            c{32h00000000, 32h00000001, 6b110101, c{32h00000001, 1b0,1b0,1b1}}, // 23 CMPLT 0<1
+            c{32h00000005, 32h00000003, 6b110101, c{32h00000000, 1b0,1b0,1b0}}, // 24 CMPLT false
+            c{32hFFFFFFFB, 32hFFFFFFFF, 6b110101, c{32h00000001, 1b0,1b0,1b1}}, // 25 CMPLT neg
+            c{32h00000007, 32h00000007, 6b110101, c{32h00000000, 1b1,1b0,1b0}}, // 26 CMPLT eq false
+            c{32h00000007, 32h00000007, 6b110111, c{32h00000001, 1b1,1b0,1b0}}, // 27 CMPLE eq
+            c{32hFFFFFFFF, 32h00000000, 6b110111, c{32h00000001, 1b0,1b0,1b1}}, // 28 CMPLE -1<=0
+            c{32h00000005, 32h00000003, 6b110111, c{32h00000000, 1b0,1b0,1b0}}, // 29 CMPLE false
+            c{32hFFFFFFFD, 32hFFFFFFFF, 6b110111, c{32h00000001, 1b0,1b0,1b1}}, // 30 CMPLE neg
+
+            // ===== Multiply (31-40) =====
+            c{32h00000003, 32h00000004, 6b000010, c{32h0000000C, 1b0,1b0,1b0}}, // 31 MUL 3*4
+            c{32h00003039, 32h00000000, 6b000010, c{32h00000000, 1b0,1b0,1b0}}, // 32 MUL zero
+            c{32hFFFFFFF9, 32h00000006, 6b000010, c{32hFFFFFFD6, 1b0,1b0,1b1}}, // 33 MUL neg*pos
+            c{32hFFFFFFF8, 32hFFFFFFFB, 6b000010, c{32h00000028, 1b0,1b0,1b1}}, // 34 MUL neg*neg
+            c{32hFFFFFFFF, 32h00000002, 6b000010, c{32hFFFFFFFE, 1b0,1b0,1b0}}, // 35 MUL trunc
+            c{32h80000000, 32h00000002, 6b000010, c{32h00000000, 1b0,1b0,1b1}}, // 36 MUL sign
+            c{32h00000400, 32h00000400, 6b000010, c{32h00100000, 1b0,1b0,1b0}}, // 37 MUL pow2
+            c{32h7FFFFFFF, 32h00000002, 6b000010, c{32hFFFFFFFE, 1b0,1b1,1b1}}, // 38 MUL overflow
+            c{32h12345678, 32h00000001, 6b000010, c{32h12345678, 1b0,1b0,1b0}}, // 39 MUL identity
+            c{32h00000007, 32hFFFFFFFF, 6b000010, c{32hFFFFFFF9, 1b0,1b0,1b0}}, // 40 MUL neg1
+
+            // ===== Shift (41-51) =====
+            c{32h00000001, 32h00000001, 6b100000, c{32h00000002, 1b0,1b0,1b0}}, // 41 SHL 1<<1
+            c{32h80000000, 32h00000001, 6b100000, c{32h00000000, 1b0,1b0,1b1}}, // 42 SHL overflow
+            c{32hDEADBEEF, 32h00000000, 6b100000, c{32hDEADBEEF, 1b0,1b0,1b1}}, // 43 SHL by 0
+            c{32h00000001, 32h00000021, 6b100000, c{32h00000002, 1b0,1b0,1b0}}, // 44 SHL masked
+            c{32h00000008, 32h00000002, 6b100001, c{32h00000002, 1b0,1b0,1b0}}, // 45 SHR 8>>2
+            c{32h80000000, 32h00000001, 6b100001, c{32h40000000, 1b0,1b1,1b0}}, // 46 SHR logical
+            c{32h80000000, 32h00000000, 6b100001, c{32h80000000, 1b0,1b0,1b1}}, // 47 SHR by 0
+            c{32h80000000, 32h00000020, 6b100001, c{32h80000000, 1b0,1b1,1b0}}, // 48 SHR masked
+            c{32h80000000, 32h00000001, 6b100011, c{32hC0000000, 1b0,1b1,1b0}}, // 49 SRA arith
+            c{32h80000000, 32h0000001F, 6b100011, c{32hFFFFFFFF, 1b0,1b1,1b0}}, // 50 SRA fill
+            c{32h40000000, 32h00000002, 6b100011, c{32h10000000, 1b0,1b0,1b0}}, // 51 SRA pos
+
+            // ===== Popcount (52-55) =====
+            c{32h00000000, 32h00000000, 6b000100, c{32h00000000, 1b1,1b0,1b0}}, // 52 POP 0
+            c{32h000001FF, 32h00000000, 6b000100, c{32h00000009, 1b0,1b0,1b0}}, // 53 POP 9
+            c{32h00000150, 32h00000000, 6b000100, c{32h00000003, 1b0,1b0,1b0}}, // 54 POP 3
+            c{32hFFFFFFFF, 32h00000000, 6b000100, c{32h00000020, 1b0,1b0,1b1}}  // 55 POP 32
+        }
+    )
+
+    test aluTest {
+        repeat(i, 56){
+            alu.a = TEST_VALUES_ALU[i][104:73]
+            alu.b = TEST_VALUES_ALU[i][72:41]
+            alu.alufn = TEST_VALUES_ALU[i][40:35]
+            $tick()
+            $assert(alu.out == TEST_VALUES_ALU[i][34:3])
+            $assert(alu.outz == TEST_VALUES_ALU[i][2])
+            $assert(alu.outv == TEST_VALUES_ALU[i][1])
+            $assert(alu.outn == TEST_VALUES_ALU[i][0])
+            $print("PASS test case: %d", i+1)
+        }
+    }
+}
