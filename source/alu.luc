@@ -1,4 +1,4 @@
-module beta_alu (
+module alu (
     input alufn[6],
     input a[32],
     input b[32],
@@ -8,6 +8,7 @@ module beta_alu (
     output outn
 ) {
     add_and_sub adder
+    mul multi
     boolean bool
     compact_shifter shifter
     compare_unit comp
@@ -20,8 +21,8 @@ module beta_alu (
         adder.b = b
         adder.is_sub = alufn[0]
 
-        // multi.a = a
-        // multi.b = b
+        multi.a = a
+        multi.b = b
 
         bool.a = a
         bool.b = b
@@ -43,7 +44,7 @@ module beta_alu (
         outn = adder.n
 
         if (~|(alufn[5:4] ^ 2b00)) {
-            if (~|(alufn[1:0] ^ 2b10)) out = a * b
+            if (~|(alufn[1:0] ^ 2b10)) out = multi.mul
             else if (alufn[2]) out = popcnt.pop
             else out = adder.out
         }
